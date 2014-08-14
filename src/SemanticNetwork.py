@@ -88,12 +88,17 @@ class Network(object):
     def GetWorld(self):
         return self.nodes[1]
     
-    def Instanciate(self, entityList, entityName):
+    # start instanciation of the game world
+    def StartInstanciation(self, entityList):
+        self.Instanciate(self.nodes[1], entityList, "world")
+    
+    # Instanciate game entites using the breadth first search algorithm
+    def Instanciate(self, start, entityList, entityName):
         newInstance = {}
         visited = set()
         queue = deque()
-        visited.add(self.nodes[1])
-        queue.append(self.nodes[1])
+        visited.add(start)
+        queue.append(start)
         while queue:
             currentnode = queue.popleft()
             print "currentnode = " + str(currentnode)
@@ -102,8 +107,23 @@ class Network(object):
             for relation in currentnode.relations:
                 if relation.destination not in visited:
                     print "current relation = " + str(relation)
-                    visited.add(relation.destination)
-                    queue.append(relation.destination)                    
+                    # If we have a new entity, instanciate it
+                    if relation.type == ControlRelationActions.Instanciate:
+                        print "instanciating " + relation.destination.label
+                        self.Instanciate(relation.destination, entityList, relation.destination.label)
+                    # if we have an association, make the link
+                    elif relation.type == ControlRelationActions.Associate:
+                        print "create association " + relation.destination.label
+                    # if we are inheriting attributes, continue the search
+                    elif relation.type == ControlRelationActions.Inherit:
+                        print "inheriting " + relation.destination.label
+                        visited.add(relation.destination)
+                        queue.append(relation.destination)
+                    # if all else fails, just continue the search 
+                    else:
+                        print "Unknown relation type"                 
+                        visited.add(relation.destination)
+                        queue.append(relation.destination)  
                 
     def __str__(self):
         outStr = ""

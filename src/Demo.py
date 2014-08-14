@@ -10,5 +10,5 @@ if __name__ == '__main__':
     network = NetworkDefinition.GetNetwork()
     print str(network)
     print "instanciating network"
-    network.Instanciate(entitylist, "world")
+    network.StartInstanciation(entitylist)
     print str(entitylist)
