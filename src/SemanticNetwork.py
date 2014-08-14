@@ -3,6 +3,9 @@ Created on 11 Aug 2014
 
 @author: mark
 '''
+
+from collections import deque
+
 # This is the semantic network, it's a static (i.e. does not change during runtime) data structure
 # which stores the potential entities and relationships that may be instanciated, and their attributes.
 # The terminology used is appropriate to semantic networks rather than graphs as this is what this is, thus
@@ -13,7 +16,7 @@ Created on 11 Aug 2014
 # - Associate: keeps a reference to the target node, does not continue down that path
 # - Inherit: accumulates the attributes of the target node into the instance and continues down that path.
 # - Instanciate: Creates a new instance and accumulates any attributes into the created instance
-class ControlAttributeActions:
+class ControlRelationActions:
     Associate, Inherit, Instanciate = range(3)
 
 # Classes to specify the networks elements; nodes and relations.
@@ -22,7 +25,7 @@ class ControlAttributeActions:
 class NetworkElement(object):
     def __init__(self, label, attributes):
         self.label = label
-        self.attributes = attributes
+        self.attributes = attributes # Attributes become control attributes when given the appropriate name
 
     # returns a formatted string representing all the attributes. The level of indent is used to indent
     # the attributes of relations deeper than those for nodes for clarity        
@@ -84,6 +87,23 @@ class Network(object):
     
     def GetWorld(self):
         return self.nodes[1]
+    
+    def Instanciate(self, entityList, entityName):
+        newInstance = {}
+        visited = set()
+        queue = deque()
+        visited.add(self.nodes[1])
+        queue.append(self.nodes[1])
+        while queue:
+            currentnode = queue.popleft()
+            print "currentnode = " + str(currentnode)
+            if currentnode.label == "base":
+                entityList[entityName] = newInstance
+            for relation in currentnode.relations:
+                if relation.destination not in visited:
+                    print "current relation = " + str(relation)
+                    visited.add(relation.destination)
+                    queue.append(relation.destination)                    
                 
     def __str__(self):
         outStr = ""
