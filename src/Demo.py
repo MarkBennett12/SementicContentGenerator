@@ -12,3 +12,11 @@ if __name__ == '__main__':
     print "instanciating network"
     network.StartInstanciation(entitylist)
     print str(entitylist)
+    
+    for entity in entitylist:
+        print entity
+        for attribute in entitylist[entity]:
+            print attribute
+            exec(entitylist[entity][attribute])
+
+        
