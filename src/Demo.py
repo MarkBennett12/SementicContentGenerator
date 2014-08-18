@@ -3,7 +3,9 @@ Created on 11 Aug 2014
 
 @author: mark
 '''
+import pygame
 import NetworkDefinition
+import math
 
 if __name__ == '__main__':
     entitylist = {}

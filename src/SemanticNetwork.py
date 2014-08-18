@@ -141,7 +141,9 @@ class Network(object):
                         if self.CheckProbability(relation.attributes):
                             for i in range(self.GetCount(relation.attributes)):
                                 print "instanciating " + relation.destination.label + str(i)
-                                self.Instanciate(relation.destination, entityList, relation.destination.label + str(i))
+                                # Check that the entity is not already there
+                                if relation.destination.label + str(i) not in entityList:
+                                    self.Instanciate(relation.destination, entityList, relation.destination.label + str(i))
                                 visited.add(relation.destination)
                                         
                     # if we are inheriting attributes, accumulate node attributes and continue the search
