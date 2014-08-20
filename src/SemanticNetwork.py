@@ -3,15 +3,16 @@ Created on 11 Aug 2014
 
 @author: mark
 '''
-import random
 from collections import deque
+import random
+import GameObject
 
 # This is the semantic network, it's a static (i.e. does not change during runtime) data structure
 # which stores the potential entities and relationships that may be instanciated, and their attributes.
 # The terminology used is appropriate to semantic networks rather than graphs as this is what this is, thus
 # vertices are referred to as nodes and edges as relations. This preserves the meaning of the network elements
 
-# imitates enum to make control attribute actions clear, the actions control
+# imitates enum to make control relations attribute actions clear, the actions control
 # what action the instanciator takes when it traverses a relation
 # - Associate: keeps a reference to the target node, does not continue down that path
 # - Inherit: accumulates the attributes of the target node into the instance and continues down that path.
@@ -26,6 +27,9 @@ class NetworkElement(object):
     def __init__(self, label, attributes):
         self.label = label
         self.attributes = attributes # Attributes become control attributes when given the appropriate name
+        
+    def AddAttribute(self, attribute):
+        self.attributes.append(attribute)
 
     # returns a formatted string representing all the attributes. The level of indent is used to indent
     # the attributes of relations deeper than those for nodes for clarity        
@@ -35,8 +39,8 @@ class NetworkElement(object):
             indentStr = indentStr + "\t"
         outStr = indentStr + "Attributes\n"
         if self.attributes:
-            for name, attr in self.attributes.iteritems():
-                outStr = outStr + indentStr + "\t" + name + " : " + attr + "\n"
+            for attr in self.attributes:
+                outStr = outStr + indentStr + "\tname: " + attr.name + ",  type: " + attr.type + ", script: " + attr.script + "\n"
         else:
             outStr = outStr + indentStr + "\tNone\n"
         return outStr
@@ -89,69 +93,76 @@ class Network(object):
         return self.nodes[1]
     
     # start instanciation of the game world
-    def StartInstanciation(self, entityList):
-        self.Instanciate(self.nodes[1], entityList, "world")
+    def StartInstanciation(self, entityList, environment):
+        self.Instanciate(self.nodes[1], entityList, "world", environment)
 
-    def CheckProbability(self, attributes):
+    def CheckProbability(self, attributes, environment):
         # Check for a 'probability' attribute and get the value from exec it if it's there
         probability = 1
-        if 'probability' in attributes:
-            exec(attributes['probability'])
-        print "The probability = " + str(probability)
+        for attribute in attributes:
+            if attributes.type == GameObject.AttributeType.Probability:
+                exec(attribute.script, globals(), environment, {"probability":probability})
+        #print "The probability = " + str(probability)
         if probability == 1 or probability > random.random():
             return True
         else:
             return False
         
-    def GetCount(self, attributes):
+    def GetCount(self, attributes, environment):
         # Check for a count attribute and get the value from exec if it's there
         count = 1
-        if 'count' in attributes:
-            exec(attributes['count'])
+        for attribute in attributes:
+            if attributes.type == GameObject.AttributeType.Count:
+                exec(attribute.script, globals(), environment, {"count":count})
         return count
     
-    def AddAttributesToEntity(self, instance, attributes, associationTarget = None):
+    def AddAttributesToEntity(self, instance, attributes, environment, associationTarget = None):
         # prepend the destination node label as a variable to the associate relation attribute for use by the scripts  
-        for key in attributes:
+        for attribute in attributes:
             if associationTarget is not None:
-                attributes[key] = "target = '" + associationTarget + "'\n" + attributes[key]
+                attribute.script = "target = '" + associationTarget + "'\n" + attribute.script
             # Don't add the control attributes to the entity attributes
-            if key != 'probability' or key != 'count':
-                instance[key] = attributes[key]
-        
+            if attribute.type == GameObject.AttributeType.Init:
+                print "In AddAttributesToEntity, attribute.name = " + attribute.name + ", attribute.script = " + attribute.script
+                environment[attribute.name] = attribute.script
+                exec(attribute.script, globals(), environment)
+            elif attribute.type != GameObject.AttributeType.Probability or attribute.type != GameObject.AttributeType.Count:
+                instance.attributes.append(attribute)
+
     # Instanciate game entites using the breadth first search algorithm
-    def Instanciate(self, start, entityList, entityName):
-        newInstance = {}
+    def Instanciate(self, start, entityList, entityName, environment):
+        # Create new entity
+        newInstance = GameObject.GameObject(entityName)
+        self.AddAttributesToEntity(newInstance, start.attributes, environment)
+        
+        # Set up search
         visited = set()
         queue = deque()
         visited.add(start)
         queue.append(start)
+        
         while queue:
             currentnode = queue.popleft()
-            print "currentnode = " + str(currentnode)
             if currentnode.label == "base":
-                entityList[entityName] = newInstance
+                entityList.append(newInstance)
             for relation in currentnode.relations:
                 if relation.destination not in visited:
-                    print "current relation = " + str(relation)
                     
                     # If we have a new entity, instanciate it
                     if relation.type == ControlRelationActions.Instanciate:
                         # Check if we are to instanciate this entity
-                        if self.CheckProbability(relation.attributes):
-                            for i in range(self.GetCount(relation.attributes)):
-                                print "instanciating " + relation.destination.label + str(i)
+                        if self.CheckProbability(relation.attributes, environment):
+                            for i in range(self.GetCount(relation.attributes, environment)):
                                 # Check that the entity is not already there
                                 if relation.destination.label + str(i) not in entityList:
-                                    self.Instanciate(relation.destination, entityList, relation.destination.label + str(i))
+                                    self.Instanciate(relation.destination, entityList, relation.destination.label + str(i), environment)
                                 visited.add(relation.destination)
                                         
                     # if we are inheriting attributes, accumulate node attributes and continue the search
                     elif relation.type == ControlRelationActions.Inherit:
                         # Check for a 'probability' attribute and get the value from exec it if it's there
-                        if self.CheckProbability(relation.attributes):
-                            print "inheriting " + relation.destination.label
-                            self.AddAttributesToEntity(newInstance, relation.destination.attributes)
+                        if self.CheckProbability(relation.attributes, environment):
+                            self.AddAttributesToEntity(newInstance, relation.destination.attributes, environment)
                             visited.add(relation.destination)
                             queue.append(relation.destination)
                                 
@@ -159,14 +170,12 @@ class Network(object):
                     elif relation.type == ControlRelationActions.Associate:
                         # Check for a 'probability' attribute and get the value from exec it if it's there
                         if self.CheckProbability(relation.attributes):
-                            print "create association to " + relation.destination.label
                             # prepend the destination node label as a variable to the associate relation attribute for use by the scripts
-                            self.AddAttributesToEntity(newInstance, relation.attributes, relation.destination.label)
+                            self.AddAttributesToEntity(newInstance, relation.attributes, environment, relation.destination.label)
                             visited.add(relation.destination)
                         
                     # if all else fails, just continue the search 
                     else:
-                        print "Unknown relation type"                 
                         visited.add(relation.destination)
                         queue.append(relation.destination)  
                 
