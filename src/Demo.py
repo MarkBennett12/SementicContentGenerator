@@ -40,7 +40,7 @@ if __name__ == '__main__':
         for entity in entitylist:
             #print "running " + entity.name
             for attribute in entity.attributes:
-                #print "executing \n'\n" + attribute.script + "\n'"
+                print "executing \n'\n" + attribute.script + "\n'"
                 exec(attribute.script, environment)
                 
         #raw_input("press key")
