@@ -40,9 +40,9 @@ class NetworkElement(object):
         outStr = indentStr + "Attributes\n"
         if self.attributes:
             for attr in self.attributes:
-                outStr = outStr + indentStr + "\tname: " + attr.name + ",  type: " + attr.type + ", script: " + attr.script + "\n"
+                outStr += indentStr + "\t" + str(attr) + "\n"
         else:
-            outStr = outStr + indentStr + "\tNone\n"
+            outStr += indentStr + "\tNone\n"
         return outStr
         
 # We use a relation class rather than just keeping a list of destination nodes in each mode 
@@ -69,12 +69,12 @@ class Node(NetworkElement):
 
     def __str__(self):
         outStr = "Node " + self.label + "\n"
-        outStr = outStr + self.AttributesToString(1) + "\tRelations\n"
+        outStr += self.AttributesToString(1) + "\tRelations\n"
         if self.relations:
             for rel in self.relations:
-                outStr = outStr + "\t\t" + str(rel)
+                outStr += "\t\t" + str(rel)
         else:
-            outStr = outStr + "\t\tNone\n"
+            outStr += "\t\tNone\n"
         return outStr
         
 class Network(object):
@@ -101,8 +101,7 @@ class Network(object):
         probability = 1
         for attribute in attributes:
             if attributes.type == GameObject.AttributeType.Probability:
-                exec(attribute.script, globals(), environment, {"probability":probability})
-        #print "The probability = " + str(probability)
+                exec(attribute.script, environment, {"probability":probability})
         if probability == 1 or probability > random.random():
             return True
         else:
@@ -113,7 +112,7 @@ class Network(object):
         count = 1
         for attribute in attributes:
             if attributes.type == GameObject.AttributeType.Count:
-                exec(attribute.script, globals(), environment, {"count":count})
+                exec(attribute.script, environment, {"count":count})
         return count
     
     def AddAttributesToEntity(self, instance, attributes, environment, associationTarget = None):
@@ -123,15 +122,16 @@ class Network(object):
                 attribute.script = "target = '" + associationTarget + "'\n" + attribute.script
             # Don't add the control attributes to the entity attributes
             if attribute.type == GameObject.AttributeType.Init:
-                print "In AddAttributesToEntity, attribute.name = " + attribute.name + ", attribute.script = " + attribute.script
-                environment[attribute.name] = attribute.script
-                exec(attribute.script, globals(), environment)
-            elif attribute.type != GameObject.AttributeType.Probability or attribute.type != GameObject.AttributeType.Count:
+                environment[attribute.name] = None
+                #print "to environment \n'\n" + attribute.script + "\n'"
+                exec(attribute.script, environment)
+            elif (attribute not in instance.attributes) and (attribute.type != GameObject.AttributeType.Probability or attribute.type != GameObject.AttributeType.Count):
                 instance.attributes.append(attribute)
 
     # Instanciate game entites using the breadth first search algorithm
     def Instanciate(self, start, entityList, entityName, environment):
         # Create new entity
+        #print "processing " + entityName
         newInstance = GameObject.GameObject(entityName)
         self.AddAttributesToEntity(newInstance, start.attributes, environment)
         
@@ -144,7 +144,7 @@ class Network(object):
         while queue:
             currentnode = queue.popleft()
             if currentnode.label == "base":
-                entityList.append(newInstance)
+                entityList.appendleft(newInstance)
             for relation in currentnode.relations:
                 if relation.destination not in visited:
                     
@@ -154,13 +154,15 @@ class Network(object):
                         if self.CheckProbability(relation.attributes, environment):
                             for i in range(self.GetCount(relation.attributes, environment)):
                                 # Check that the entity is not already there
-                                if relation.destination.label + str(i) not in entityList:
-                                    self.Instanciate(relation.destination, entityList, relation.destination.label + str(i), environment)
+                                for entity in entityList:
+                                    if entity.name == relation.destination.label + str(i):
+                                        return
+                                self.Instanciate(relation.destination, entityList, relation.destination.label + str(i), environment)
                                 visited.add(relation.destination)
                                         
                     # if we are inheriting attributes, accumulate node attributes and continue the search
                     elif relation.type == ControlRelationActions.Inherit:
-                        # Check for a 'probability' attribute and get the value from exec it if it's there
+                        # Check for a 'probability' attribute and get the value from the control attribute it if it's there
                         if self.CheckProbability(relation.attributes, environment):
                             self.AddAttributesToEntity(newInstance, relation.destination.attributes, environment)
                             visited.add(relation.destination)
@@ -168,7 +170,7 @@ class Network(object):
                                 
                     # if we have an association, make the link
                     elif relation.type == ControlRelationActions.Associate:
-                        # Check for a 'probability' attribute and get the value from exec it if it's there
+                        # Check for a 'probability' attribute and get the value from the control attribute it if it's there
                         if self.CheckProbability(relation.attributes):
                             # prepend the destination node label as a variable to the associate relation attribute for use by the scripts
                             self.AddAttributesToEntity(newInstance, relation.attributes, environment, relation.destination.label)
@@ -182,5 +184,5 @@ class Network(object):
     def __str__(self):
         outStr = ""
         for node in self.nodes:
-            outStr = outStr + str(node) + "\n"
+            outStr += str(node) + "\n"
         return outStr

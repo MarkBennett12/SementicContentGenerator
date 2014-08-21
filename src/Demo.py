@@ -10,24 +10,24 @@ import NetworkDefinition
 from collections import deque
 
 if __name__ == '__main__':
-    entitylist = []
+    entitylist = deque()
     
-    # Set up the scope for the exec function
-    environment = {}
-    environment['pygame'] = globals()['pygame']
-    environment["entityList"] = entitylist
-
     # Setup pygame
     pygame.init()
     size = width, height = 320, 240
     screen = pygame.display.set_mode(size)
     background = 0, 0, 0
     
+    # Set up the scope for the exec function
+    environment = {}
+    environment['pygame'] = globals()['pygame']
+    environment['sys'] = globals()['sys']
+    environment["entityList"] = entitylist
+    environment['screen'] = screen
+    environment['size'] = size
+
     # Setup semantic generator
     network = NetworkDefinition.GetNetwork()
-    #print str(network)
-    print "instanciating world"
-    print str(globals())
         
     while True:
         for event in pygame.event.get():
@@ -35,14 +35,15 @@ if __name__ == '__main__':
                 sys.exit()
         
         network.StartInstanciation(entitylist, environment)
-        screen.fill(background)
+        #screen.fill(background)
+        
         for entity in entitylist:
-            print "entity in game loop = " + str(entity)
-            print "entity.attributes in game loop = " + str(entity.attributes)
+            #print "running " + entity.name
             for attribute in entity.attributes:
-                print "attribute in game loop = " + str(attribute)
-                #print str(environment['pos'])
-                #print str(environment)
-                exec(attribute.script, globals(), environment)
-        pygame.display.update()
+                #print "executing \n'\n" + attribute.script + "\n'"
+                exec(attribute.script, environment)
+                
+        #raw_input("press key")
+        
+        pygame.display.flip()
 
