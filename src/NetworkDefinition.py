@@ -13,10 +13,6 @@ network = SemanticNetwork.Network()
 
 collisionDef = """
 def collide(withobj):
-    print "pos[0] = " + str(pos[0])
-    print "withobj[0] = " + str(withobj[0])
-    print "pos[1] = " + str(pos[1])
-    print "withobj[1] = " + str(withobj[1])
     if pos[0] >= withobj[0] or pos[0] < 0 or pos[1] >= withobj[1] or pos[1] < 0:
         return True
     else:
@@ -25,19 +21,19 @@ def collide(withobj):
 
 moveDef = """
 if collide(size):
-    print "a collision"
     speed[0] *= -1
     speed[1] *= -1
 
 pos[0] += speed[0]
 pos[1] += speed[1]
 """
-
-solidObj = SemanticNetwork.Node("solidObj", [GameObject.Attribute("pos", GameObject.AttributeType.Init, 'pos = [0, 0]'), GameObject.Attribute("collide(with)", GameObject.AttributeType.Init, collisionDef)])
+#
+# GameObject.Attribute("pos", GameObject.AttributeType.Init, 'pos = [10, 10]'), 
+solidObj = SemanticNetwork.Node("solidObj", [GameObject.Attribute("pos", GameObject.AttributeType.Init , 'pos = [0, 0]'), GameObject.Attribute("collide(with)", GameObject.AttributeType.Init, collisionDef)])
 solidObj.AddRelation("isa", network.GetBase(), SemanticNetwork.ControlRelationActions.Inherit, {})
 network.AddNode(solidObj)
 
-ball = SemanticNetwork.Node("ball", [GameObject.Attribute("image", GameObject.AttributeType.Init, 'image = pygame.image.load("ball.gif")'), GameObject.Attribute("pos", GameObject.AttributeType.Init, 'pos = [2, 2]'), GameObject.Attribute("speed", GameObject.AttributeType.Init, 'speed = [1, 1]'), GameObject.Attribute("move", GameObject.AttributeType.Runtime, moveDef), GameObject.Attribute("show", GameObject.AttributeType.Runtime, 'screen.blit(image, pos)')])
+ball = SemanticNetwork.Node("ball", [GameObject.Attribute("image", GameObject.AttributeType.Init, 'image = pygame.image.load("ball.gif")'), GameObject.Attribute("pos", GameObject.AttributeType.Init, 'pos = [20, 20]'), GameObject.Attribute("speed", GameObject.AttributeType.Init, 'speed = [1, 1]'), GameObject.Attribute("move", GameObject.AttributeType.Runtime, moveDef), GameObject.Attribute("show", GameObject.AttributeType.Runtime, 'screen.blit(image, pos)')])
 ball.AddRelation("isa", solidObj, SemanticNetwork.ControlRelationActions.Inherit, {})
 network.AddNode(ball)
 
