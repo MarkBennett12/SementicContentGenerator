@@ -14,34 +14,36 @@ if __name__ == '__main__':
     
     # Setup pygame
     pygame.init()
-    size = width, height = 320, 240
-    screen = pygame.display.set_mode(size)
+    windowSize = width, height = 320, 240
+    screen = pygame.display.set_mode(windowSize)
     background = 0, 0, 0
     
     # Set up the scope for the exec function
-    environment = {}
-    environment['pygame'] = globals()['pygame']
-    environment['sys'] = globals()['sys']
-    environment["entityList"] = entitylist
-    environment['screen'] = screen
-    environment['size'] = size
+    globalEnvironment = {}
+    globalEnvironment['pygame'] = globals()['pygame']
+    globalEnvironment['sys'] = globals()['sys']
+    globalEnvironment["entityList"] = entitylist
+    globalEnvironment['screen'] = screen
+    globalEnvironment['windowSize'] = windowSize
 
     # Setup semantic generator
-    network = NetworkDefinition.GetNetwork()
+    network = NetworkDefinition.GetNetwork(globalEnvironment)
         
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
         
-        network.StartInstanciation(entitylist, environment)
+        network.StartInstanciation(entitylist)
         #screen.fill(background)
+        print "RUNNING ============================================================================"
         
         for entity in entitylist:
-            #print "running " + entity.name
+            print "running " + entity.name
             for attribute in entity.attributes:
-                print "executing \n'\n" + attribute.script + "\n'"
-                exec(attribute.script, environment)
+                #print "In demo.py, entity: " + entity.name + ", environment: " + str(entity.environment)
+                #print "executing \n'" + attribute.script + "'\n"
+                exec(attribute.script, globalEnvironment, entity.environment)
                 
         #raw_input("press key")
         

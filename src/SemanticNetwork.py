@@ -7,6 +7,11 @@ from collections import deque
 import random
 import GameObject
 
+# Excetion class for errors during instanciation
+class Instanciationerror(BaseException):
+   def __init__(self, arg):
+      self.args = arg
+      
 # This is the semantic network, it's a static (i.e. does not change during runtime) data structure
 # which stores the potential entities and relationships that may be instanciated, and their attributes.
 # The terminology used is appropriate to semantic networks rather than graphs as this is what this is, thus
@@ -78,10 +83,11 @@ class Node(NetworkElement):
         return outStr
         
 class Network(object):
-    def __init__(self):
+    def __init__(self, globalEnvironment):
         self.nodes = []
         self.nodes.append(Node("base", {}))
         self.nodes.append(Node("world", {}))
+        self.globalEnvironment = globalEnvironment
         
     def AddNode(self, node):
         self.nodes.append(node)
@@ -91,49 +97,59 @@ class Network(object):
     
     def GetWorld(self):
         return self.nodes[1]
-    
-    # start instanciation of the game world
-    def StartInstanciation(self, entityList, environment):
-        self.Instanciate(self.nodes[1], entityList, "world", environment)
 
-    def CheckProbability(self, attributes, environment):
+    def CheckProbability(self, attributes):
         # Check for a 'probability' attribute and get the value from exec it if it's there
         probability = 1
         for attribute in attributes:
             if attributes.type == GameObject.AttributeType.Probability:
-                exec(attribute.script, environment, {"probability":probability})
+                exec(attribute.script, self.globalEnvironment, {"probability":probability})
         if probability == 1 or probability > random.random():
             return True
         else:
             return False
         
-    def GetCount(self, attributes, environment):
+    def GetCount(self, attributes):
         # Check for a count attribute and get the value from exec if it's there
         count = 1
         for attribute in attributes:
             if attributes.type == GameObject.AttributeType.Count:
-                exec(attribute.script, environment, {"count":count})
+                exec(attribute.script, self.globalEnvironment, {"count":count})
         return count
     
-    def AddAttributesToEntity(self, instance, attributes, environment, associationTarget = None):
-        # prepend the destination node label as a variable to the associate relation attribute for use by the scripts  
+    def AddAttributesToEntity(self, instance, attributes, parentAttributes, associationTarget = None):
+        # Add the parent attributes to the local environment
+        for parentAttribute in parentAttributes:
+            if parentAttribute.type == GameObject.AttributeType.Init:
+                parentAttribute.AddAttributeToEnv("parent_" + parentAttribute.name, self.globalEnvironment, instance.environment)
+                    
         for attribute in attributes:
+            # prepend the destination node label as a variable to the associate relation attribute for use by the scripts
             if associationTarget is not None:
                 attribute.script = "target = '" + associationTarget + "'\n" + attribute.script
-            # Don't add the control attributes to the entity attributes
-            if attribute.type == GameObject.AttributeType.Init:
-                environment[attribute.name] = None
-                #print "to environment \n'\n" + attribute.script + "\n'"
-                exec(attribute.script, environment)
-            elif (attribute not in instance.attributes) and (attribute.type != GameObject.AttributeType.Probability or attribute.type != GameObject.AttributeType.Count):
+                
+            # Add initialisation attributes to the local environment and execute the script
+            if attribute.name not in instance.environment and attribute.type == GameObject.AttributeType.Init:
+                # Check for virtual attributes not being overridden
+                if not attribute.script:
+                    raise Instanciationerror("Virtual attribute " + attribute.name + " must be overridden")
+                attribute.AddAttributeToEnv(attribute.name, self.globalEnvironment, instance.environment)
+                
+            # Don't add the control attributes to the entity attributes or existing attributes (implement overridding virtual attributes)
+            elif attribute not in instance.attributes and attribute.type == GameObject.AttributeType.Runtime:
+                # Check for virtual attributes not being overridden
+                if not attribute.script:
+                    raise Instanciationerror("Virtual attribute" + attribute.name + " must be overridden")
                 instance.attributes.append(attribute)
+                
+    # start instanciation of the game world
+    def StartInstanciation(self, entityList):
+        self.Instanciate(self.nodes[1], entityList, "world")
 
     # Instanciate game entites using the breadth first search algorithm
-    def Instanciate(self, start, entityList, entityName, environment):
+    def Instanciate(self, start, entityList, instance):
         # Create new entity
         #print "processing " + entityName
-        newInstance = GameObject.GameObject(entityName)
-        self.AddAttributesToEntity(newInstance, start.attributes, environment)
         
         # Set up search
         visited = set()
@@ -144,27 +160,34 @@ class Network(object):
         while queue:
             currentnode = queue.popleft()
             if currentnode.label == "base":
-                entityList.appendleft(newInstance)
+                entityList.appendleft(instance)
             for relation in currentnode.relations:
                 if relation.destination not in visited:
                     
                     # If we have a new entity, instanciate it
                     if relation.type == ControlRelationActions.Instanciate:
                         # Check if we are to instanciate this entity
-                        if self.CheckProbability(relation.attributes, environment):
-                            for i in range(self.GetCount(relation.attributes, environment)):
+                        if self.CheckProbability(relation.attributes):
+                            for i in range(self.GetCount(relation.attributes)):
+                                # Generate the new instance name
+                                name = relation.destination.label + str(i)
                                 # Check that the entity is not already there
-                                for entity in entityList:
-                                    if entity.name == relation.destination.label + str(i):
+                                for existingInstance in entityList: 
+                                    if name == existingInstance.name:
                                         return
-                                self.Instanciate(relation.destination, entityList, relation.destination.label + str(i), environment)
+                                print "instanciating " + name
+                                newInstance = GameObject.GameObject(name)
+                                #print "New instance environment: " + str(newInstance.environment)
+                                self.AddAttributesToEntity(newInstance, relation.destination.attributes, start.attributes)    
+                                self.Instanciate(relation.destination, entityList, newInstance)
                                 visited.add(relation.destination)
                                         
                     # if we are inheriting attributes, accumulate node attributes and continue the search
                     elif relation.type == ControlRelationActions.Inherit:
                         # Check for a 'probability' attribute and get the value from the control attribute it if it's there
-                        if self.CheckProbability(relation.attributes, environment):
-                            self.AddAttributesToEntity(newInstance, relation.destination.attributes, environment)
+                        if self.CheckProbability(relation.attributes):
+                            print "inheriting from " + relation.destination.label
+                            self.AddAttributesToEntity(instance, relation.destination.attributes, {})
                             visited.add(relation.destination)
                             queue.append(relation.destination)
                                 
@@ -173,7 +196,8 @@ class Network(object):
                         # Check for a 'probability' attribute and get the value from the control attribute it if it's there
                         if self.CheckProbability(relation.attributes):
                             # prepend the destination node label as a variable to the associate relation attribute for use by the scripts
-                            self.AddAttributesToEntity(newInstance, relation.attributes, environment, relation.destination.label)
+                            print "associating with " + relation.destination.label
+                            self.AddAttributesToEntity(instance, relation.attributes, {}, relation.destination.label)
                             visited.add(relation.destination)
                         
                     # if all else fails, just continue the search 
