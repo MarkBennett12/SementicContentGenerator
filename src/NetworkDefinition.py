@@ -1,4 +1,4 @@
-'''
+﻿'''
 Created on 11 Aug 2014
 
 @author: mark
@@ -31,7 +31,7 @@ if collide(pos, parent_size):
 pos[0] += speed[0]
 pos[1] += speed[1]
 """
-    ball = SemanticNetwork.Node("ball", [GameObject.Attribute("image", False, GameObject.AttributeType.Init, 'image = pygame.image.load("ball.gif")'), GameObject.Attribute("pos",  True, GameObject.AttributeType.Init, '[20, 20]'), GameObject.Attribute("speed",  True, GameObject.AttributeType.Init, '[1, 1]'), GameObject.Attribute("move", False, GameObject.AttributeType.Runtime, ballMoveDef), GameObject.Attribute("show", False, GameObject.AttributeType.Runtime, 'screen.blit(image, pos)')])
+    ball = SemanticNetwork.Node("ball", [GameObject.Attribute("image", False, GameObject.AttributeType.Init, "image = pygame.image.load('ball.gif')"), GameObject.Attribute("pos",  True, GameObject.AttributeType.Init, '[20, 20]'), GameObject.Attribute("speed",  True, GameObject.AttributeType.Init, '[1, 1]'), GameObject.Attribute("move", False, GameObject.AttributeType.Runtime, ballMoveDef), GameObject.Attribute("show", False, GameObject.AttributeType.Runtime, 'screen.blit(image, pos)')])
     ball.AddRelation("isa", solidObj, SemanticNetwork.ControlRelationActions.Inherit, {})
     network.AddNode(ball)
     
