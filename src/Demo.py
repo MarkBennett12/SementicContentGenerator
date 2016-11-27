@@ -6,6 +6,7 @@ Created on 11 Aug 2014
 import sys
 import pygame
 import math
+import noise
 import NetworkDefinition
 from collections import deque
 
@@ -14,7 +15,7 @@ if __name__ == '__main__':
     
     # Setup pygame
     pygame.init()
-    windowSize = width, height = 320, 240
+    windowSize = width, height = 800, 600
     screen = pygame.display.set_mode(windowSize)
     background = 0, 0, 0
     
