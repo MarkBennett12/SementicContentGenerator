@@ -5,7 +5,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{bfe69a89-896a-4e91-b4a2-7540d864fb8f}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>src\Demo.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath />
     <WorkingDirectory>.\src</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -22,12 +23,7 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="src\ball.gif" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="src\Demo.py" />
     <Compile Include="src\GameObject.py" />
-    <Compile Include="src\NetworkDefinition.py" />
     <Compile Include="src\SemanticNetwork.py" />
   </ItemGroup>
   <ItemGroup>
