@@ -6,7 +6,6 @@ Created on 11 Aug 2014
 import sys
 import pygame
 import math
-import noise
 import NetworkDefinition
 from collections import deque
 
