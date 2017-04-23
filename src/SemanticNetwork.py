@@ -149,7 +149,7 @@ class Network(object):
     # Instanciate game entites using the breadth first search algorithm
     def Instanciate(self, start, entityList, instance):
         # Create new entity
-        #print "processing " + entityName
+        #print("processing " + entityName)
         
         # Set up search
         visited = set()
@@ -175,9 +175,9 @@ class Network(object):
                                 for existingInstance in entityList: 
                                     if name == existingInstance.name:
                                         return
-                                print "instanciating " + name
+                                #print("instanciating " + name)
                                 newInstance = GameObject.GameObject(name)
-                                #print "New instance environment: " + str(newInstance.environment)
+                                #print("New instance environment: " + str(newInstance.environment))
                                 self.AddAttributesToEntity(newInstance, relation.destination.attributes, start.attributes)    
                                 self.Instanciate(relation.destination, entityList, newInstance)
                                 visited.add(relation.destination)
@@ -186,7 +186,7 @@ class Network(object):
                     elif relation.type == ControlRelationActions.Inherit:
                         # Check for a 'probability' attribute and get the value from the control attribute it if it's there
                         if self.CheckProbability(relation.attributes):
-                            print "inheriting from " + relation.destination.label
+                            print("inheriting from " + relation.destination.label)
                             self.AddAttributesToEntity(instance, relation.destination.attributes, {})
                             visited.add(relation.destination)
                             queue.append(relation.destination)
@@ -196,7 +196,7 @@ class Network(object):
                         # Check for a 'probability' attribute and get the value from the control attribute it if it's there
                         if self.CheckProbability(relation.attributes):
                             # prepend the destination node label as a variable to the associate relation attribute for use by the scripts
-                            print "associating with " + relation.destination.label
+                            print("associating with " + relation.destination.label)
                             self.AddAttributesToEntity(instance, relation.attributes, {}, relation.destination.label)
                             visited.add(relation.destination)
                         
