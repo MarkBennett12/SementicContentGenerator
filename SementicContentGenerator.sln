@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.108
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SementicContentGenerator", "SementicContentGenerator.pyproj", "{BFE69A89-896A-4E91-B4A2-7540D864FB8F}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "SementicContentGenerator", "SementicContentGenerator.pyproj", "{E97C2C18-8E7D-47EF-B401-D2E72CF8AF81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BFE69A89-896A-4E91-B4A2-7540D864FB8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BFE69A89-896A-4E91-B4A2-7540D864FB8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E97C2C18-8E7D-47EF-B401-D2E72CF8AF81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E97C2C18-8E7D-47EF-B401-D2E72CF8AF81}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B186DCC0-A57D-4D44-BAAF-8D1FE419868D}
 	EndGlobalSection
 EndGlobal
